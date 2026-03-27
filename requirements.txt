@@ -1,0 +1,4 @@
+medmnist
+numpy
+torch
+torchvision
