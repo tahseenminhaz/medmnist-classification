@@ -67,6 +67,9 @@ Configuration is in `configs/serve_config.yaml` (model checkpoint path, host, po
 # First train
 docker compose run train
 
+# then evaluate
+docker compose run evaluate
+
 # Then serve (http://localhost:8000)
 docker compose up serve
 ```

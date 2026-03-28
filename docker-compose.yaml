@@ -7,6 +7,29 @@ services:
       - ./logs:/workspace/logs
       - ./data:/workspace/data
       - ./weights:/workspace/weights
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  evaluate:
+    build: .
+    command: python scripts/evaluate.py
+    volumes:
+      - ./configs:/workspace/configs
+      - ./logs:/workspace/logs
+      - ./data:/workspace/data
+      - ./weights:/workspace/weights
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   serve:
     build: .
@@ -18,3 +41,10 @@ services:
       - ./logs:/workspace/logs
       - ./data:/workspace/data
       - ./weights:/workspace/weights
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
