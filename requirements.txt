@@ -2,3 +2,5 @@ medmnist
 numpy
 torch
 torchvision
+pytest
+matplotlib
