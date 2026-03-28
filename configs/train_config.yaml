@@ -1,0 +1,28 @@
+data:
+  dataset: bloodmnist
+  download_root: data
+  batch_size: 16
+  num_workers: 0
+  n_channels: 3
+  download: true
+  augmentation:
+    random_horizontal_flip: true
+    random_rotation: 10
+    # color_jitter:
+    #   brightness: 0.2
+    #   contrast: 0.2
+    #   saturation: 0.2
+    #   hue: 0.1    
+
+model:
+  name: resnet18   # simple_cnn or resnet18
+  pretrained: true
+  weights_dir: weights # directory to store pretrained weights if pretrained is true
+  
+
+training:
+  epochs: 5
+  lr: 0.0005
+  weight_decay: 0.0001
+  log_dir: logs
+  device: cuda
