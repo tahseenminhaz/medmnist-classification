@@ -25,4 +25,4 @@ training:
   lr: 0.0005
   weight_decay: 0.0001
   log_dir: logs
-  device: cuda
+  device: auto

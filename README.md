@@ -6,21 +6,29 @@ End-to-end ML system for medical image classification on **BloodMNIST** (8 blood
 
 ```
 ├── configs/
-│   └── train_config.yaml        # Experiment configuration
-│   └── serve_config.yaml        # Serving configuration, will be populated later
+│   ├── train_config.yaml        # Experiment configuration
+│   └── serve_config.yaml        # Serving configuration (checkpoint, host, port)
 ├── src/
 │   ├── schemas.py               # Protocol contracts (DataModule, ModelFactory, TrainerAPI)
 │   ├── data/
 │   │   ├── module.py            # MedMNISTDataModule that loads, splits, serves dataloaders
 │   │   └── transforms.py        # Config-driven augmentation and preprocessing
-│   └── training/
-│       ├── model.py             # SimpleCNN, ResNet-18, and ModelFactory. More models can be added.
-│       └── trainer.py           # Training loop, metrics, logging, checkpoints
+│   ├── training/
+│   │   ├── model.py             # SimpleCNN, ResNet-18, and ModelFactory. More models can be added.
+│   │   └── trainer.py           # Training loop, metrics, logging, checkpoints
+│   └── serving/
+│       ├── app.py               # FastAPI app to predict
+│       └── static/
+│           └── index.html       # Classifier UI
 ├── scripts/
-│   └── check_train.py           # Training entrypoint
+│   ├── train.py           # Training entrypoint
+│   ├── evaulate.py           # Evaluate entrypoint
+│   └── serve.py                 # Serving entrypoint
 ├── tests/
-│   └── data_test.py             # Data pipeline tests. Other tests will be added soon.
+│   └── data_test.py             # Data pipeline tests
+│   └── model_test.py             # Data pipeline tests
 ├── Dockerfile
+├── docker-compose.yaml
 └── pyproject.toml
 ```
 
@@ -33,14 +41,35 @@ End-to-end ML system for medical image classification on **BloodMNIST** (8 blood
 ## Training
 
 ```bash
-python scripts/check_train.py
+python scripts/train.py
 ```
 
 Training reads `configs/train_config.yaml`. Outputs go to `logs/<model_name>/`:
-- `metrics.csv` logs per-epoch train loss/acc, val loss/acc/AUC/F1
+- `train_log.csv` logs per-epoch train loss/acc, val loss/acc/AUC/F1
 - `confusion_matrix.png` provides final validation predictions
 - `best_model.pth` : checkpoint saved at the epoch with the highest val F1
 
+## Serving
+
+Start the inference server:
+
+```bash
+python scripts/serve.py
+```
+
+- **UI**: http://localhost:8000 — upload an image, see prediction and probabilities
+
+Configuration is in `configs/serve_config.yaml` (model checkpoint path, host, port).
+
+## Docker
+
+```bash
+# First train
+docker compose run train
+
+# Then serve (http://localhost:8000)
+docker compose up serve
+```
 
 ## Architecture Decisions
 

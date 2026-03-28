@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedMNIST Classifier</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f7fa; color: #1a1a2e; padding: 2rem; }
+  h1 { margin-bottom: 1.5rem; font-size: 1.5rem; }
+  .container { max-width: 720px; margin: 0 auto; }
+  .upload-area {
+    border: 2px dashed #b0b8c8; border-radius: 12px; padding: 2rem;
+    text-align: center; cursor: pointer; transition: border-color 0.2s;
+    background: #fff; margin-bottom: 1.5rem;
+  }
+  .upload-area:hover { border-color: #4a6cf7; }
+  .upload-area input { display: none; }
+  .upload-area p { color: #6b7280; }
+  .result { display: none; gap: 1.5rem; background: #fff; border-radius: 12px; padding: 1.5rem; }
+  .result.show { display: flex; flex-wrap: wrap; }
+  .image-panel { flex: 0 0 200px; text-align: center; }
+  .image-panel img { width: 168px; height: 168px; image-rendering: pixelated; border-radius: 8px; border: 1px solid #e5e7eb; }
+  .prediction-label { margin-top: 0.5rem; font-weight: 600; font-size: 1.1rem; color: #4a6cf7; }
+  .probs-panel { flex: 1; min-width: 280px; }
+  .prob-row { display: flex; align-items: center; margin-bottom: 0.5rem; }
+  .prob-name { width: 180px; font-size: 0.85rem; text-align: right; padding-right: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prob-bar-bg { flex: 1; height: 22px; background: #eef0f4; border-radius: 4px; overflow: hidden; position: relative; }
+  .prob-bar { height: 100%; background: #4a6cf7; border-radius: 4px; transition: width 0.4s ease; }
+  .prob-bar.top { background: #22c55e; }
+  .prob-val { position: absolute; right: 6px; top: 2px; font-size: 0.75rem; color: #374151; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>MedMNIST Blood Cell Classifier</h1>
+  <div class="upload-area" id="dropzone">
+    <p>Drop an image here or click to upload</p>
+    <input type="file" id="fileInput" accept="image/*">
+  </div>
+  <div class="result" id="result">
+    <div class="image-panel">
+      <img id="preview" src="" alt="uploaded image">
+      <div class="prediction-label" id="predLabel"></div>
+    </div>
+    <div class="probs-panel" id="probs"></div>
+  </div>
+</div>
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.style.borderColor = '#4a6cf7'; });
+dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = '#b0b8c8'; });
+dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.style.borderColor = '#b0b8c8'; handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+async function handleFile(file) {
+  if (!file) return;
+  document.getElementById('preview').src = URL.createObjectURL(file);
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch('/predict', { method: 'POST', body: form });
+  const data = await res.json();
+  document.getElementById('predLabel').textContent = data.predicted_class;
+  const probs = data.probabilities;
+  const maxProb = Math.max(...Object.values(probs));
+  const html = Object.entries(probs)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, val]) => `
+      <div class="prob-row">
+        <div class="prob-name" title="${name}">${name}</div>
+        <div class="prob-bar-bg">
+          <div class="prob-bar ${val === maxProb ? 'top' : ''}" style="width:${(val * 100).toFixed(1)}%"></div>
+          <span class="prob-val">${(val * 100).toFixed(1)}%</span>
+        </div>
+      </div>`).join('');
+  document.getElementById('probs').innerHTML = html;
+  document.getElementById('result').classList.add('show');
+}
+</script>
+</body>
+</html>
