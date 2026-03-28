@@ -1,0 +1,20 @@
+services:
+  train:
+    build: .
+    command: python scripts/train.py
+    volumes:
+      - ./configs:/workspace/configs
+      - ./logs:/workspace/logs
+      - ./data:/workspace/data
+      - ./weights:/workspace/weights
+
+  serve:
+    build: .
+    command: python scripts/serve.py
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./configs:/workspace/configs
+      - ./logs:/workspace/logs
+      - ./data:/workspace/data
+      - ./weights:/workspace/weights

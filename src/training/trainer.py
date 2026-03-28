@@ -6,11 +6,10 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, confusion_matrix
+
+from src.utils import save_confusion_matrix
 
 
 class Trainer:
@@ -34,7 +33,7 @@ class Trainer:
     def train(self, train_loader: DataLoader, val_loader: DataLoader, label_names=None):
         self.label_names = label_names
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        csv_path = self.log_dir / "metrics.csv"
+        csv_path = self.log_dir / "train_log.csv"
         best_f1 = 0.0
         checkpoint_path = self.log_dir / "best_model.pth"
 
@@ -76,39 +75,11 @@ class Trainer:
         print("\nFinal confusion matrix:\n", cm)
 
         label_names = self.label_names
-        self._save_confusion_matrix_image(cm, label_names)
+        save_confusion_matrix(cm, label_names, self.log_dir / "val_confusion_matrix.png")
 
         print(f"\nLogs saved to {csv_path}")
         print(f"Best model saved to {checkpoint_path} (val_f1: {best_f1:.4f})")
         return val_metrics
-
-    def _save_confusion_matrix_image(self, cm, label_names=None):
-        n = cm.shape[0]
-        if label_names is None:
-            label_names = [str(i) for i in range(n)]
-
-        fig, ax = plt.subplots(figsize=(max(6, n), max(5, n - 1)))
-        im = ax.imshow(cm, interpolation="nearest", cmap="Blues")
-        fig.colorbar(im, ax=ax, shrink=0.8)
-
-        ax.set_xticks(range(n))
-        ax.set_yticks(range(n))
-        ax.set_xticklabels(label_names, rotation=45, ha="right", fontsize=8)
-        ax.set_yticklabels(label_names, fontsize=8)
-        ax.set_xlabel("Predicted")
-        ax.set_ylabel("True")
-        ax.set_title("Confusion Matrix")
-
-        thresh = cm.max() / 2.0
-        for i in range(n):
-            for j in range(n):
-                ax.text(j, i, str(cm[i, j]),
-                        ha="center", va="center", fontsize=7,
-                        color="white" if cm[i, j] > thresh else "black")
-
-        fig.tight_layout()
-        fig.savefig(self.log_dir / "confusion_matrix.png", dpi=150)
-        plt.close(fig)
 
     def _train_one_epoch(self, loader: DataLoader):
         self.model.train()

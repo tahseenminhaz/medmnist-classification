@@ -1,0 +1,13 @@
+model:
+  name: resnet18
+  checkpoint: logs/resnet18/best_model.pth
+  n_channels: 3
+  n_classes: 8
+
+data:
+  dataset: bloodmnist
+  n_channels: 3
+
+server:
+  host: 0.0.0.0
+  port: 8000
