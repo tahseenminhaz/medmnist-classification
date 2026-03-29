@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, confusion_matrix
 from tqdm import tqdm
+import mlflow
 
 from src.utils import save_confusion_matrix
 
@@ -53,6 +54,15 @@ class Trainer:
                     best_f1 = val_metrics["f1"]
                     torch.save(self.model.state_dict(), checkpoint_path)
 
+                mlflow.log_metrics({
+                    "train_loss": train_loss,
+                    "train_acc": train_acc,
+                    "val_loss": val_metrics["loss"],
+                    "val_acc": val_metrics["accuracy"],
+                    "val_auc": val_metrics["auc"],
+                    "val_f1": val_metrics["f1"],
+                }, step=epoch + 1)
+
                 row = {
                     "epoch": epoch + 1,
                     "train_loss": f"{train_loss:.4f}",
@@ -76,7 +86,13 @@ class Trainer:
         print("\nFinal confusion matrix:\n", cm)
 
         label_names = self.label_names
-        save_confusion_matrix(cm, label_names, self.log_dir / "val_confusion_matrix.png")
+        cm_path = self.log_dir / "val_confusion_matrix.png"
+        save_confusion_matrix(cm, label_names, cm_path)
+
+        mlflow.log_artifact(str(checkpoint_path))
+        mlflow.log_artifact(str(cm_path))
+        mlflow.log_artifact(str(csv_path))
+        mlflow.log_metric("best_val_f1", best_f1)
 
         print(f"\nLogs saved to {csv_path}")
         print(f"Best model saved to {checkpoint_path} (val_f1: {best_f1:.4f})")

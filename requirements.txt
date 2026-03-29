@@ -11,3 +11,5 @@ fastapi==0.135.2
 uvicorn==0.42.0
 python-multipart==0.0.22
 pytest==9.0.2
+mlflow==2.19.0
+mlflow==2.19.0
