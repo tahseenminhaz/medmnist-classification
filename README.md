@@ -122,7 +122,7 @@ python scripts/evaluate.py
 ```
 
 Evaluate reads `configs/serve_config.yaml`. 
-- `test_confusion_matrix.png` provides final validation predictions
+- `test_confusion_matrix.png` provides final test predictions
 
 ## Serving
 
@@ -149,7 +149,7 @@ Configuration is in `configs/serve_config.yaml` (model checkpoint path, host, po
 
 ## Tradeoffs
 
-- **No cross-run model selection**: each training run saves its own best checkpoint, and serving points to a fixed path. The best model across runs must be selected manually. With more time, MLflow's model registry could promote the top-performing run's checkpoint that the serving layer loads automatically.
+- **No cross-run model selection**: each training run saves its own best checkpoint, and serving layer points to a fixed path. The best model across runs must be selected manually. With more time, MLflow's model registry could promote the top-performing run's checkpoint that the serving layer loads automatically.
 - **No learning rate scheduler**: fixed LR works for short runs. A cosine or step scheduler would improve convergence on longer training and could be added as another config option.
 - **No early stopping**: training always runs for the full epoch count. Adding patience-based early stopping would avoid wasted compute on larger experiments.
 - **Normalization uses fixed 0.5/0.5**: rather than dataset-specific statistics. Computing channel means/stds from the training set during `prepare_data` would be more accurate.
