@@ -36,7 +36,7 @@ Ensure your environment meets these requirements before starting:
 │   └── serve.py                 # Serving entrypoint
 ├── tests/
 │   └── data_test.py             # Data pipeline tests
-│   └── model_test.py             # Data pipeline tests
+│   └── model_test.py             # Model tests
 ├── Dockerfile
 ├── docker-compose.yaml
 └── pyproject.toml
@@ -81,6 +81,10 @@ python -m venv .venv
 
 # Activate it (macOS/Linux):
 source .venv/bin/activate
+
+# Install dependencies and package
+pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Training
@@ -89,10 +93,27 @@ source .venv/bin/activate
 python scripts/train.py
 ```
 
-Training reads `configs/train_config.yaml`. Outputs go to `logs/<model_name>/`:
+Training reads `configs/train_config.yaml`. Outputs of the latest run go to `logs/<model_name>/`:
 - `train_log.csv` logs per-epoch train loss/acc, val loss/acc/AUC/F1
 - `val_confusion_matrix.png` provides final validation predictions
 - `best_model.pth` : checkpoint saved at the epoch with the highest val F1
+
+### Experiment Tracking
+
+Every training run is automatically tracked with [MLflow](https://mlflow.org/). Each run records:
+- **Parameters**: model name, learning rate, epochs, weight decay, batch size, augmentation settings
+- **Metrics**: per-epoch train loss/acc, val loss/acc/AUC/F1, and best val F1
+- **Artifacts**: config YAML, best checkpoint, confusion matrix, training log CSV
+- **Git commit**: tagged automatically for code traceability
+
+Browse and compare runs with the MLflow UI:
+
+```bash
+mlflow ui
+# Open http://localhost:5000
+```
+
+All tracking data is stored locally in `mlruns/` (git-ignored).
 
 ## Evaluate
 
@@ -120,12 +141,15 @@ Configuration is in `configs/serve_config.yaml` (model checkpoint path, host, po
 
 - **Protocol-based contracts** : components are independently replaceable without inheritance coupling. `src/schemas.py` defines `DataModule`, `ModelFactory`, and `TrainerAPI` as Python Protocols. Trainer, data module, and model factory know nothing about each other.
 
-- **Config-driven augmentation** : Single YAML controls the full experiment (dataset, augmentation, model, hyperparameters, device), keeping experiment changes out of source code. Also easier to couple with MLOps tools.
+- **Config-driven augmentation** : single YAML controls the full experiment (dataset, augmentation, model, hyperparameters, device), keeping experiment changes out of source code. Also easier to couple with MLOps tools.
 
-- **Model Selection**: `Resnet-18` is used for its strong transfer learning ability in small medical images. A lightweight `SimpleCNN` is available as an alternative.
+- **MLflow experiment tracking** : every run logs the full config, per-epoch metrics, and artifacts (checkpoints, confusion matrices) to a local MLflow store.
+
+- **Model Selection**: `Resnet-18` is used for its strong transfer learning ability in small medical images. A lightweight CNN is available as an alternative.
 
 ## Tradeoffs
 
-- No learning rate scheduler : fixed LR works for short runs; a cosine or step scheduler would help for longer training.
-- No early stopping : would add for larger experiments to avoid wasted compute.
-- Normalization uses fixed 0.5/0.5 rather than data specific statistics
+- **No cross-run model selection**: each training run saves its own best checkpoint, and serving points to a fixed path. The best model across runs must be selected manually. With more time, MLflow's model registry could promote the top-performing run's checkpoint that the serving layer loads automatically.
+- **No learning rate scheduler**: fixed LR works for short runs. A cosine or step scheduler would improve convergence on longer training and could be added as another config option.
+- **No early stopping**: training always runs for the full epoch count. Adding patience-based early stopping would avoid wasted compute on larger experiments.
+- **Normalization uses fixed 0.5/0.5**: rather than dataset-specific statistics. Computing channel means/stds from the training set during `prepare_data` would be more accurate.
