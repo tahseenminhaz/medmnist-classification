@@ -1,6 +1,16 @@
 # MedMNIST Blood Cell Classification
 
-End-to-end ML system for medical image classification on **BloodMNIST** (8 blood cell types, 28×28 RGB).
+End-to-end ML system for medical image classification on **BloodMNIST**.
+
+## Prerequisites
+
+Ensure your environment meets these requirements before starting:
+
+* **Operating System**: Linux, macOS, or Windows (WSL2 recommended).
+* **Docker Desktop**: Recommended for consistent environment reproduction. [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+* **Hardware**: 
+    * *Recommended*: NVIDIA GPU with [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) for accelerated training.
+
 
 ## Repository Structure
 
@@ -32,10 +42,45 @@ End-to-end ML system for medical image classification on **BloodMNIST** (8 blood
 └── pyproject.toml
 ```
 
-## Setup
+## Quick Start 
+
+The fastest way to get the system running without local dependency management is via Docker:
 
 ```bash
-# Dev container (recommended) : open in VS Code → "Reopen in Container"
+# 1. Train the model
+# Downloads data, runs the pipeline, and saves the best checkpoint
+docker compose run train
+
+# 2. Launch the inference API & Web UI
+docker compose up serve
+```
+
+
+## Local Development
+
+### VS Code & Dev Containers (Recommended)
+
+- Install VS Code.
+- Install the "Dev Containers" extension in VS Code.
+- Open this folder in VS Code.
+- Reopen in Container: A pop-up should appear in the bottom right. Click "Reopen in Container".
+- Alternatively: Press F1, type "Dev Containers: Rebuild and Reopen in Container".
+- Result: VS Code will build the image from the Dockerfile.
+
+### Manual Installation (No Docker)
+
+If you prefer to run the system natively without Docker or VS Code:
+
+**Set up a Virtual Environment**:
+```bash
+# Create the environment
+python -m venv .venv
+
+# Activate it (Windows):
+.venv\Scripts\activate
+
+# Activate it (macOS/Linux):
+source .venv/bin/activate
 ```
 
 ## Training
@@ -46,8 +91,17 @@ python scripts/train.py
 
 Training reads `configs/train_config.yaml`. Outputs go to `logs/<model_name>/`:
 - `train_log.csv` logs per-epoch train loss/acc, val loss/acc/AUC/F1
-- `confusion_matrix.png` provides final validation predictions
+- `val_confusion_matrix.png` provides final validation predictions
 - `best_model.pth` : checkpoint saved at the epoch with the highest val F1
+
+## Evaluate
+
+```bash
+python scripts/evaluate.py
+```
+
+Evaluate reads `configs/serve_config.yaml`. 
+- `test_confusion_matrix.png` provides final validation predictions
 
 ## Serving
 
@@ -57,22 +111,10 @@ Start the inference server:
 python scripts/serve.py
 ```
 
-- **UI**: http://localhost:8000 — upload an image, see prediction and probabilities
+- **UI**: http://localhost:8000 — upload an image, see prediction and probabilities. Sample images are provided under ```sample/```
 
 Configuration is in `configs/serve_config.yaml` (model checkpoint path, host, port).
 
-## Docker
-
-```bash
-# First train
-docker compose run train
-
-# then evaluate
-docker compose run evaluate
-
-# Then serve (http://localhost:8000)
-docker compose up serve
-```
 
 ## Architecture Decisions
 

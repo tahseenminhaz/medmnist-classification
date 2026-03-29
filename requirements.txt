@@ -1,11 +1,13 @@
-medmnist
-numpy
-torch
-torchvision
-pytest
-matplotlib
-pyyaml
-scikit-learn
-fastapi
-uvicorn
-python-multipart
+--extra-index-url https://download.pytorch.org/whl/cu124
+
+torch==2.6.0
+torchvision==0.21.0
+medmnist==3.0.2
+numpy==2.4.4
+scikit-learn==1.8.0
+matplotlib==3.10.8
+pyyaml==6.0.3
+fastapi==0.135.2
+uvicorn==0.42.0
+python-multipart==0.0.22
+pytest==9.0.2
