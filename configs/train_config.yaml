@@ -1,8 +1,8 @@
 data:
   dataset: bloodmnist
   download_root: data
-  batch_size: 16
-  num_workers: 0
+  batch_size: 256
+  num_workers: 4
   n_channels: 3
   download: true
   augmentation:
@@ -16,12 +16,12 @@ data:
 
 model:
   name: resnet18   # simple_cnn or resnet18
-  pretrained: true
+  pretrained: true # use true for resnet18
   weights_dir: weights # directory to store pretrained weights if pretrained is true
   
 
 training:
-  epochs: 5
+  epochs: 20
   lr: 0.0005
   weight_decay: 0.0001
   log_dir: logs

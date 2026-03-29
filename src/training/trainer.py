@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, confusion_matrix
+from tqdm import tqdm
 
 from src.utils import save_confusion_matrix
 
@@ -87,7 +88,9 @@ class Trainer:
         correct = 0
         total = 0
 
-        for imgs, labels in loader:
+        pbar = tqdm(loader, desc="Training", leave=False, dynamic_ncols=True)
+        
+        for imgs, labels in pbar:
             imgs = imgs.to(self.device)
             labels = labels.to(self.device).squeeze().long()
 
@@ -97,9 +100,16 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
 
-            total_loss += loss.item() * imgs.size(0)
-            correct += (outputs.argmax(1) == labels).sum().item()
-            total += imgs.size(0)
+            batch_size = imgs.size(0)
+            total_loss += loss.item() * batch_size
+            batch_correct = (outputs.argmax(1) == labels).sum().item()
+            correct += batch_correct
+            total += batch_size
+
+            pbar.set_postfix({
+                "loss": f"{loss.item():.4f}", 
+                "acc": f"{(batch_correct / batch_size):.4f}"
+            })
 
         return total_loss / total, correct / total
 
@@ -110,8 +120,10 @@ class Trainer:
         all_preds = []
         all_probs = []
 
+        pbar = tqdm(loader, desc="Validating", leave=False, dynamic_ncols=True)
+
         with torch.no_grad():
-            for imgs, labels in loader:
+            for imgs, labels in pbar:
                 imgs = imgs.to(self.device)
                 labels = labels.to(self.device).squeeze().long()
 
